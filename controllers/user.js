@@ -17,7 +17,7 @@ export const userRegister = async (req, res) => {
     }
 
     const newUser = new User({ name, email, password });
-    await newUser.save(); 
+    await newUser.save();
 
     generateToken(newUser, 201, res, "User registered successfully");
   } catch (error) {
@@ -46,7 +46,12 @@ export const userLogin = async (req, res) => {
 
 export const userLogout = async (req, res) => {
   try {
-    res.clearCookie("token").json({ message: "Logged out successfully" });
+    res.clearCookie("token", {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+      secure: true,  // Ensure your server is running over HTTPS
+      sameSite: 'None',  // Required for cross-origin cookies
+    }).json({ message: "Logged out successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -119,17 +124,17 @@ export const userDelete = async (req, res) => {
     if (req.user.role === "admin") {
       // Find and delete the user
       const user = await User.findOneAndDelete({ _id: req.params.id });
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // No need to save after findOneAndDelete
       // await user.save(); - This line should be removed
-      
+
       // Find teams where user is a member
       const teams = await Team.find({ members: req.params.id });
-      
+
       // Update each team by removing the user
       for (const team of teams) {
         team.members = team.members.filter(
@@ -137,16 +142,16 @@ export const userDelete = async (req, res) => {
         );
         await team.save();
       }
-      
+
       // Find and delete user's contacts
       // findMany should be find
       const contacts = await Contact.find({ creater: req.params.id, groupId: null });
-      
+
       // Delete each contact
       for (const contact of contacts) {
         await Contact.findOneAndDelete({ _id: contact._id });
       }
-      
+
       return res.status(200).clearCookie().json({ message: "User deleted successfully" });
     } else {
       return res
