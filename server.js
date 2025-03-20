@@ -10,7 +10,7 @@ dotenv.config({
   });
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: "https://contact-management-front-git-3271e3-abhayg980gmailcoms-projects.vercel.app",
     credentials: true
 }));
 app.use(express.json());
